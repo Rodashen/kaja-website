@@ -40,6 +40,10 @@ For the practice subdomain, upload the **contents of `practice/`** into that sub
 
 For the main domain, deploy the main-site files separately. Do not overwrite the current WordPress site without the owner's backup, approval, and redirect plan. Read [FTP upload guide](setup/FTP-UPLOAD-GUIDE.md).
 
+The landing-page exam buttons and EPS practice navigation link use the relative URL `practice/`. For a combined deployment, publish the root website **with the `practice/` folder included**. This keeps exam navigation on the current deployment, including repository-path hosting, and avoids relying on the separately configured practice subdomain.
+
+If the owner chooses separate domain/subdomain deployments instead, configure and verify the practice subdomain before changing these links to an absolute address.
+
 Creating or pushing this repository does not automatically publish the website. No automated deployment or GitHub Pages hosting is configured here.
 
 ## Email and registration
