@@ -1,0 +1,176 @@
+export const MODES = ['full', 'reading', 'listening'];
+// Keep source question types, choices and recordings together. Number clips and
+// instruction examples stay in their original slots.
+export function assembleExam(template, pool, selection) {
+  if (!Array.isArray(selection) || selection.length !== 40 || new Set(selection).size !== 40) throw Error('Invalid exam selection.');
+  const byId = new Map(pool.questions.map(q => [q.id,q]));
+  const questions = template.questions.map((slot,i) => {
+    const q = byId.get(selection[i]);
+    if (!q || q.section !== slot.section || (pool.selectionVersion!==2 && q.group !== slot.group)) throw Error('Question type mismatch.');
+    const numberAudioSource=q.textbookNumberRemoved ? template.sequence.find(s=>s.label==='Question '+slot.number)?.src : undefined;
+    const numberAudio=numberAudioSource ? 'media/eps-topik/exam-number-'+slot.number+'.mp3' : undefined;
+    if(q.textbookNumberRemoved&&!numberAudio)throw Error('Missing exam number announcement.');
+    return {...q,number:slot.number,...(numberAudio?{numberAudio,numberAudioSource}:{})};
+  });
+  let number = 0;
+  const sequence = template.sequence.map(step => {
+    if (step.question) number = step.question;
+    if (number && step.src === template.questions[number-1].audio) return {...step,src:questions[number-1].audio};
+    return {...step};
+  });
+  return validateBank({...template,id:template.id+':'+selection.join(','),title:'EPS-TOPIK Random Practice',questions,sequence});
+}
+export function isGraphQuestion(q){return q.section==='reading' && (q.category==='graph' || /chart|graph/i.test(q.id) || /그래프/.test(q.instruction));}
+export function selectExam(template, pool, history = {}, random = Math.random) {
+  if(pool.selectionVersion===2)return selectTextbookExam(template,pool,history,random);
+  const previous = new Set(Array.isArray(history.previous) ? history.previous : []);
+  const counts = history.counts || {};
+  const graphs=pool.questions.filter(q=>isGraphQuestion(q)&&!previous.has(q.id));
+  const graphSlots=template.questions.map((slot,i)=>({slot,i,tie:random()})).filter(({slot})=>graphs.some(q=>q.group===slot.group&&q.section===slot.section)).sort((a,b)=>a.tie-b.tie);
+  const graphCount=Math.min(2+Math.floor(random()*2),graphs.length);
+  if(graphs.length<graphCount||graphSlots.length<graphCount)throw Error('Not enough graph questions for this exam.');
+  const requiredGraphSlots=new Set(graphSlots.slice(0,graphCount).map(s=>s.i));
+  for(let attempt=0;attempt<200;attempt++) {
+    const used = new Set();
+    const selection = template.questions.map((slot,i) => {
+      // The four contextual vocabulary slots alternate books and prioritize
+      // challenging questions. Exclude the preceding attempt for every type.
+      const bookSlot=template.questions.slice(0,i).filter(q=>q.group==='42').length;
+      const requiredBook=slot.group==='42' ? 1+bookSlot%2 : null;
+      const candidates = pool.questions.filter(q => q.group === slot.group && q.section === slot.section && !used.has(q.id) && !previous.has(q.id) && isGraphQuestion(q)===requiredGraphSlots.has(i) && (!requiredBook || q.provenance?.book===requiredBook));
+      // Prefer questions absent from the last test, then the least-used ones.
+      const ranked = candidates.map(q=>({q,repeat:previous.has(q.id)?1:0,count:Number(counts[q.id])||0,tie:random()}))
+        .sort((a,b)=>a.repeat-b.repeat || (attempt===199 ? (a.q.audioSeconds||0)-(b.q.audioSeconds||0) : 0) || (b.q.difficulty==='hard'?1:0)-(a.q.difficulty==='hard'?1:0) || (attempt<20 ? a.count-b.count : 0) || a.tie-b.tie);
+      if(!ranked.length) throw Error('Not enough questions for this question type.');
+      used.add(ranked[0].q.id);return ranked[0].q.id;
+    });
+    const exam = assembleExam(template,pool,selection);
+    const duration = (pool.listeningOverheadSeconds || 0) + 2*exam.questions.slice(20).reduce((n,q)=>n+(q.audioSeconds||0),0);
+    if(duration > template.sectionSeconds-10) continue;
+    if(selection.every(id=>previous.has(id))) continue;
+    return exam;
+  }
+  throw Error('Could not prepare a fresh exam within the listening time limit. Please try again.');
+}
+function selectTextbookExam(template,pool,history,random){
+  const previous=new Set(Array.isArray(history.previous)?history.previous:[]);
+  const counts=history.counts||{};
+  const available=pool.questions.filter(q=>!previous.has(q.id));
+  const rank=items=>items.map(q=>({q,tie:random()})).sort((a,b)=>(b.q.difficulty==='hard'?1:0)-(a.q.difficulty==='hard'?1:0)||(Number(counts[a.q.id])||0)-(Number(counts[b.q.id])||0)||a.tie-b.tie).map(x=>x.q);
+  const take=(items,n)=>{if(items.length<n)throw Error('Not enough fresh textbook questions. Please contact KAJA.');return rank(items).slice(0,n);};
+  const graphs=available.filter(q=>isGraphQuestion(q)&&q.provenance?.book===1);
+  const graphCount=Math.min(2+Math.floor(random()*2),graphs.length);
+  if(graphCount<2)throw Error('Not enough fresh graph questions. Please contact KAJA.');
+  const reading=[...take(graphs,graphCount),...take(available.filter(q=>q.section==='reading'&&q.provenance?.book===1&&!isGraphQuestion(q)),6-graphCount),...take(available.filter(q=>q.section==='reading'&&q.provenance?.book===2),14)];
+  let listening;
+  if(pool.listeningProfile==='short-separated-v1'){
+    const eligible=available.filter(q=>q.section==='listening'&&q.audioSeparated&&q.textbookNumberRemoved&&q.choices.every(c=>c.audio));
+    const takeListening=(book,type,n)=>{
+      const candidates=eligible.filter(q=>q.provenance.book===book&&q.listeningType===type);
+      if(candidates.length<n)throw Error('Not enough fresh short listening questions. Please contact KAJA.');
+      return candidates.map(q=>({q,tie:random()})).sort((a,b)=>(Number(counts[a.q.id])||0)-(Number(counts[b.q.id])||0)||a.tie-b.tie).slice(0,n).map(x=>x.q);
+    };
+    listening=[...takeListening(1,'basic-response',6),...takeListening(2,'basic-response',10),...takeListening(2,'continuation',2),...takeListening(2,'short-dialogue',2)];
+  }else listening=[...take(available.filter(q=>q.section==='listening'&&q.provenance?.book===1&&q.audioScope==='question'),6),...take(available.filter(q=>q.section==='listening'&&q.provenance?.book===2&&q.audioScope==='question'),14)];
+  // Fisher–Yates keeps each section mixed without moving listening into reading.
+  const shuffle=items=>{for(let i=items.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[items[i],items[j]]=[items[j],items[i]];}return items;};
+  return assembleExam(template,pool,[...shuffle(reading),...shuffle(listening)].map(q=>q.id));
+}
+export function leaveQuestion(state, bank) {
+  const q = bank.questions[state.current-1];
+  if(q && state.visited?.[q.id] && state.answers[q.id] === undefined) (state.skipped ||= {})[q.id] = true;
+}
+export function questionStatus(state,q) {
+  return {answered:state.answers[q.id]!==undefined,skipped:state.answers[q.id]===undefined&&Boolean(state.skipped?.[q.id]),flagged:Boolean(state.flags[q.id])};
+}
+export function mediaPath(value) {
+  return typeof value === 'string' && /^media\/eps-topik\/[a-zA-Z0-9_.-]+$/.test(value);
+}
+export function validateBank(bank) {
+  if (!bank || bank.version !== 1 || typeof bank.id !== 'string' || bank.sectionSeconds !== 1500 || !Array.isArray(bank.questions)) throw Error('Unsupported exam data.');
+  const ids = new Set();
+  if (bank.questions.length !== 40) throw Error('A full exam needs 40 questions.');
+  bank.questions.forEach((q, i) => {
+    if (!q.id || ids.has(q.id) || q.number !== i + 1 || q.section !== (i < 20 ? 'reading' : 'listening')) throw Error('Invalid question order.');
+    ids.add(q.id);
+    if (typeof q.prompt !== 'string' || typeof q.instruction !== 'string' || !Array.isArray(q.images) || !Array.isArray(q.choices) || q.choices.length !== 4 || !Number.isInteger(q.answer) || q.answer < 0 || q.answer > 3) throw Error('Invalid question ' + q.number);
+    for (const c of q.choices) if (typeof c.text !== 'string' || !Array.isArray(c.images)) throw Error('Invalid answer choice.');
+    const paths = [...q.images, ...q.choices.flatMap(c => [...c.images,...(c.audio?[c.audio]:[])])];
+    if (q.section === 'listening') paths.push(q.audio);
+    if(q.numberAudio)paths.push(q.numberAudio);
+    if (!paths.every(mediaPath)) throw Error('Invalid media path.');
+  });
+  if (!Array.isArray(bank.sequence) || !bank.sequence.length) throw Error('Missing listening sequence.');
+  const markers = bank.sequence.filter(s => s.question).map(s => s.question);
+  if (markers.join(',') !== Array.from({length:20}, (_, i) => i + 21).join(',')) throw Error('Invalid listening sequence.');
+  if (!bank.sequence.every(s => s.question || mediaPath(s.src))) throw Error('Invalid recording.');
+  return bank;
+}
+export function questionsFor(bank, mode) {
+  return bank.questions.filter(q => mode === 'full' || q.section === mode);
+}
+export function sectionOrder(state) {
+  return state.mode === 'full' ? (state.firstSection === 'listening' ? ['listening','reading'] : ['reading','listening']) : [state.mode];
+}
+export function nextSection(state) {
+  const order = sectionOrder(state);
+  return order[order.indexOf(state.stage)+1] || null;
+}
+export function createAttempt(bank, mode, candidate = {}, now = Date.now(), firstSection = 'reading') {
+  if (!MODES.includes(mode)) throw Error('Invalid mode');
+  if (!['reading','listening'].includes(firstSection)) throw Error('Invalid starting section');
+  const stage = mode === 'full' ? firstSection : mode;
+  return {version:1, bankId:bank.id, selection:bank.questions.map(q=>q.id), mode, firstSection:stage, candidate:{name:String(candidate.name || '').slice(0,80),seat:String(candidate.seat || '').slice(0,20)}, stage, current:stage === 'listening' ? 21 : 1, answers:{}, flags:{}, visited:{}, skipped:{}, startedAt:now, deadline:now + bank.sectionSeconds * 1000, completedAt:null, sequenceIndex:0, audioOffset:0};
+}
+export function advanceTime(state, bank, now = Date.now()) {
+  if (state.stage === 'complete' || now < state.deadline) return false;
+  leaveQuestion(state,bank);
+  const next = nextSection(state);
+  if (next) {
+    state.stage = next; state.current = next === 'listening' ? 21 : 1;
+    state.deadline += bank.sectionSeconds * 1000;
+    state.sequenceIndex = 0; state.audioOffset = 0;
+    if (now >= state.deadline) { state.stage = 'complete'; state.completedAt = state.deadline; }
+  } else { state.stage = 'complete'; state.completedAt = state.deadline; }
+  return true;
+}
+export function finishSection(state, bank, now = Date.now()) {
+  if (state.stage === 'complete') return;
+  state.deadline = now;
+  advanceTime(state, bank, now);
+}
+export function answerQuestion(state, bank, number, answer) {
+  const q = bank.questions.find(q => q.number === number);
+  if (!q || state.stage === 'complete' || q.section !== state.stage || !Number.isInteger(answer) || answer < 0 || answer > 3) return false;
+  state.answers[q.id] = answer;
+  return true;
+}
+export function scoreAttempt(state, bank) {
+  const items = questionsFor(bank, state.mode).map(q => ({question:q, answer:state.answers[q.id], correct:state.answers[q.id] === q.answer}));
+  const correct = items.filter(x => x.correct).length;
+  const unanswered = items.filter(x => x.answer === undefined).length;
+  return {items,total:items.length,correct,unanswered,incorrect:items.length - correct - unanswered,percent:Number((correct / items.length * 100).toFixed(1)),points:correct * 2.5,maxPoints:items.length * 2.5};
+}
+export function restoreAttempt(raw, bank) {
+  try {
+    const s = JSON.parse(raw);
+    if (s?.firstSection !== undefined && !['reading','listening'].includes(s.firstSection)) return null;
+    if (!s || s.version !== 1 || s.bankId !== bank.id || !MODES.includes(s.mode) || !['reading','listening','complete'].includes(s.stage) || !Number.isFinite(s.deadline) || !Number.isFinite(s.startedAt) || s.deadline < s.startedAt || s.deadline > s.startedAt + 3000000 || !s.answers || typeof s.answers !== 'object' || !s.flags || typeof s.flags !== 'object' || !s.candidate || typeof s.candidate.name !== 'string' || typeof s.candidate.seat !== 'string') return null;
+    if ((s.mode === 'reading' && s.stage === 'listening') || (s.mode === 'listening' && s.stage === 'reading')) return null;
+    const valid = questionsFor(bank,s.mode);
+    if (!valid.some(q => q.number === s.current) || (s.stage !== 'complete' && bank.questions[s.current-1].section !== s.stage)) return null;
+    if (!Number.isInteger(s.sequenceIndex) || s.sequenceIndex < 0 || s.sequenceIndex > bank.sequence.length || !Number.isFinite(s.audioOffset) || s.audioOffset < 0 || s.audioOffset > 3600) return null;
+    for (const [id,a] of Object.entries(s.answers)) if (!valid.some(q => q.id === id) || !Number.isInteger(a) || a < 0 || a > 3) return null;
+    if(s.ubtPlayback!==undefined){
+      if(!s.ubtPlayback||typeof s.ubtPlayback!=='object'||Array.isArray(s.ubtPlayback))return null;
+      const keys=new Set(valid.flatMap(q=>[q.id+':question',...q.choices.map((_,i)=>q.id+':choice:'+i)]));
+      for(const [key,count] of Object.entries(s.ubtPlayback))if(!keys.has(key)||!Number.isInteger(count)||count<0||count>2)return null;
+    }
+    s.candidate.name = s.candidate.name.slice(0,80); s.candidate.seat = s.candidate.seat.slice(0,20);
+    return s;
+  } catch { return null; }
+}
+export function formatTime(milliseconds) {
+  const seconds = Math.max(0,Math.ceil(milliseconds / 1000));
+  return String(Math.floor(seconds / 60)).padStart(2,'0') + ':' + String(seconds % 60).padStart(2,'0');
+}

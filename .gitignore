@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+kaja-mail-config.php
+node_modules/
+.wrangler/
+.openai/
+.taste-skill/
+*.log
+*.zip
+Thumbs.db
+.DS_Store
