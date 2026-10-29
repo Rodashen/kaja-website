@@ -65,3 +65,7 @@ The example SMTP configuration contains no credentials. Real configuration belon
 Kaja logo, photographs, school content, and published passers originate from the school's existing website and supplied project materials. HRDK textbooks, recordings, question references, and video guides retain their source attributions. Bootstrap Icons and PHPMailer retain their bundled licenses. No blanket open-source license is granted over third-party school or textbook materials by this repository.
 
 These are preparation tools, not an official HRDK examination. Color-dot practice is not a medical diagnosis or an eligibility assessment.
+
+## KAJA enrollment and interview reviewer
+
+The landing page enrollment button opens the published KAJA Google Form configured in `site-config.js`. The practice portal links to `practice/reviewer.html`, with the supplied 47-page PDF, original tool/pictogram visuals, 177 Korean question-and-answer cards, 37 commands, and 30 safety topics. Existing recorded interview practice, HRDK tools, safety material, and video guides remain available in `practice/skills.html`. Reviewer sample answers are study examples, not official exam guarantees.
