@@ -3,7 +3,7 @@ const status = document.querySelector('#voice-status');
 let currentAudio = null;
 controls.forEach(button => button.addEventListener('click', async () => {
   if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
-  const audio = new Audio('assets/pop-listening/' + button.dataset.ubtAudio + '.mp3?v=once-20261031');
+  const audio = new Audio('assets/pop-listening/' + button.dataset.ubtAudio + '.mp3?v=quiet-20261031');
   audio.volume = 0.65;
   currentAudio = audio;
   controls.forEach(control => control.classList.toggle('playing', control === button));
