@@ -17,13 +17,4 @@
       card.querySelector('.quiz-feedback').textContent = button.dataset.correct === 'yes' ? card.dataset.success : 'Not quite — give it another try.';
     }));
   });
-  document.querySelectorAll('[data-speak]').forEach(button => button.addEventListener('click', () => {
-    if (!('speechSynthesis' in window)) { document.querySelector('#voice-status').textContent = 'Voice playback is not available in this browser.'; return; }
-    speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(button.dataset.speak); utterance.lang = 'ko-KR';
-    const voice = speechSynthesis.getVoices().find(v => v.lang.toLowerCase().startsWith('ko'));
-    if (voice) utterance.voice = voice;
-    else { document.querySelector('#voice-status').textContent = 'A Korean voice may need to be installed on your device.'; }
-    speechSynthesis.speak(utterance);
-  }));
 })();
