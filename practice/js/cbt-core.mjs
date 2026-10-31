@@ -70,7 +70,11 @@ function selectTextbookExam(template,pool,history,random){
       if(candidates.length<n)throw Error('Not enough fresh short listening questions. Please contact KAJA.');
       return candidates.map(q=>({q,tie:random()})).sort((a,b)=>(Number(counts[a.q.id])||0)-(Number(counts[b.q.id])||0)||a.tie-b.tie).slice(0,n).map(x=>x.q);
     };
-    listening=[...takeListening(1,'basic-response',6),...takeListening(2,'basic-response',10),...takeListening(2,'continuation',2),...takeListening(2,'short-dialogue',2)];
+    // Use short picture-matching items and straightforward spoken responses.
+    // Eight Book 1 and ten Book 2 questions leave enough fresh items for a retry.
+    const pictures=available.filter(q=>q.section==='listening' && q.id.startsWith('reference-') && q.audioSeconds<=12 && q.choices.every(c=>c.images.length>0));
+    const pictureQuestions=take(pictures,2);
+    listening=[...takeListening(1,'basic-response',8),...takeListening(2,'basic-response',10),...pictureQuestions];
   }else listening=[...take(available.filter(q=>q.section==='listening'&&q.provenance?.book===1&&q.audioScope==='question'),6),...take(available.filter(q=>q.section==='listening'&&q.provenance?.book===2&&q.audioScope==='question'),14)];
   // Fisher–Yates keeps each section mixed without moving listening into reading.
   const shuffle=items=>{for(let i=items.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[items[i],items[j]]=[items[j],items[i]];}return items;};

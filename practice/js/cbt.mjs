@@ -1,4 +1,4 @@
-import {assembleExam,selectExam,leaveQuestion,questionStatus,validateBank,createAttempt,restoreAttempt,questionsFor,advanceTime,finishSection,answerQuestion,scoreAttempt,formatTime,nextSection} from './cbt-core.mjs?v=ubt-easier-separated-9';
+import {assembleExam,selectExam,leaveQuestion,questionStatus,validateBank,createAttempt,restoreAttempt,questionsFor,advanceTime,finishSection,answerQuestion,scoreAttempt,formatTime,nextSection} from './cbt-core.mjs?v=picture-listening-20261031';
 import {attachNumberAnnouncement} from './numbered-audio.mjs?v=ubt-easier-separated-9';
 import {createUbtPlayback,ubtAudioKey,ubtPlayCount} from './ubt-playback.mjs?v=ubt-easier-separated-9';
 const app=document.querySelector('#app');
