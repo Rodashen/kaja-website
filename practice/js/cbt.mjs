@@ -1,4 +1,4 @@
-import {assembleExam,selectExam,leaveQuestion,questionStatus,validateBank,createAttempt,restoreAttempt,questionsFor,advanceTime,finishSection,answerQuestion,scoreAttempt,formatTime,nextSection} from './cbt-core.mjs?v=picture-listening-20261031';
+import {assembleExam,selectExam,leaveQuestion,questionStatus,validateBank,createAttempt,restoreAttempt,questionsFor,advanceTime,finishSection,answerQuestion,scoreAttempt,formatTime,nextSection} from './cbt-core.mjs?v=ubt-picture-4-20261031';
 import {attachNumberAnnouncement} from './numbered-audio.mjs?v=ubt-easier-separated-9';
 import {createUbtPlayback,ubtAudioKey,ubtPlayCount} from './ubt-playback.mjs?v=ubt-easier-separated-9';
 const app=document.querySelector('#app');
@@ -108,7 +108,7 @@ function renderSetup(){
     if(mode.value!=='reading'&&(!played||!heard.checked)){soundStatus.textContent='Play the sound check and confirm you can hear it before starting.';heard.focus();return;}
     const start=async()=>{
       try{
-        bank=selectExam(template,pool,history);
+        bank=selectExam(template,pool,history,Math.random,{ubt:UBT});
         state=createAttempt(bank,mode.value,{name:name.value.trim(),seat:seat.value.trim()},Date.now(),UBT?firstSection.value:'reading');
         const used=questionsFor(bank,mode.value).map(q=>q.id);
         history={previous:used,counts:{...history.counts}};
