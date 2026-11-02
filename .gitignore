@@ -10,3 +10,16 @@ node_modules/
 *.zip
 Thumbs.db
 .DS_Store
+
+# Protected practice files deploy only to the Cloudflare Worker.
+/practice/**
+!/practice/.htaccess
+!/practice/index.html
+!/practice/ubt.html
+!/practice/cbt.html
+!/practice/exams.html
+!/practice/exam-entry.html
+!/practice/skills.html
+!/practice/reviewer.html
+!/practice/ishihara.html
+!/practice/passport-converter.html
