@@ -21,6 +21,20 @@
  @keyframes heart-greeting{0%{transform:rotate(20deg) scale(.85)}45%{transform:rotate(8deg) scale(1.06)}75%{transform:rotate(25deg)}100%{transform:rotate(20deg) scale(1)}}
 }
 @media(prefers-reduced-motion:reduce){.scroll-reveal{opacity:1!important;transform:none!important}}
+.footer-brand img{background:transparent}
+@media(prefers-reduced-motion:no-preference){
+ a,button,summary,input,select,textarea{transition:color .2s ease,background-color .2s ease,border-color .2s ease,box-shadow .2s ease,transform .2s ease}
+ button:active,.button:active{transform:scale(.97)}
+ summary:hover{color:var(--red)}
+ .tabs button:hover,.pop-nav button:hover{transform:translateY(-2px)}
+ .answers button:hover,.mini-ubt-play:hover{transform:translateY(-2px)}
+ input:focus,select:focus,textarea:focus{box-shadow:0 0 0 4px #092f6312}
+ .social-links svg{transition:transform .25s ease}.social-links a:hover svg{transform:rotate(-8deg) scale(1.1)}
+ .brand img{transition:transform .25s ease}.brand:hover img{transform:scale(1.025)}
+ .about-dropdown summary:after,.outline-body summary:after{transition:transform .25s ease}
+ .outline-body details[open] summary:after{transform:rotate(180deg)}
+ .gallery-open img,.passer-feature img{transition:transform .4s ease}.gallery-open:hover img,.passer-feature:hover img{transform:scale(1.035)}
+}
 .section{padding-top:72px;padding-bottom:72px}
 .section-intro{align-items:start;gap:40px;margin-bottom:34px}
 .section-intro h2{max-width:16ch;line-height:1.08}
@@ -51,3 +65,5 @@ footer>a:not(.footer-brand){grid-column:2;justify-self:start;min-height:44px;dis
  .footer-brand img{height:90px}
  .questions h2 br:after{content:' '}
 }
+
+footer .footer-brand img{background:transparent}
