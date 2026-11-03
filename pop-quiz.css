@@ -8,3 +8,8 @@
 
 /* Let each swipe card use its own content height. */
 .pop-cards{align-items:flex-start}.pop-card{height:auto}.pop-card .quiz-feedback:empty{display:none}.pop-card .exam-body{padding-bottom:24px}
+.pop-card:first-child{display:flex;flex-direction:column}.pop-card:first-child .exam-body{flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px;padding:36px 32px}.pop-card:first-child .exam-body h3{font-size:clamp(27px,2.4vw,36px);line-height:1.3;margin:6px 0 14px}.pop-card:first-child .answers{grid-template-columns:1fr;gap:12px}.pop-card:first-child .answers button{font-size:18px;padding:16px 18px;min-height:58px}.pop-card:first-child .exam-body>small{margin-top:20px}.pop-card:first-child .quiz-feedback{margin:0}
+@media(max-width:760px){.pop-card:first-child .exam-body{padding:24px 20px;gap:8px}.pop-card:first-child .exam-body h3{font-size:26px}.pop-card:first-child .answers button{font-size:17px;min-height:52px;padding:12px 16px}}
+@media(max-width:400px){.pop-card:first-child .exam-body{padding:20px 18px;gap:0}.pop-card:first-child .exam-body h3{font-size:23px;margin:4px 0 12px}.pop-card:first-child .answers{gap:8px}.pop-card:first-child .answers button{font-size:16px;min-height:48px;padding:10px 14px}.pop-card:first-child .exam-body>small{margin-top:14px}}
+@media(min-width:761px) and (max-width:1050px){.practice-layout{grid-template-columns:1fr;gap:32px}.pop-quiz{width:100%;max-width:680px;justify-self:center}}
+@media(min-width:761px){.pop-card:first-child .answers{grid-template-columns:1fr 1fr}.pop-card:first-child .answers button{min-height:72px;font-size:19px}.pop-card:first-child .exam-body{padding:28px 28px;gap:6px}.pop-card:first-child .exam-body h3{font-size:30px}}
