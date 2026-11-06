@@ -58,7 +58,7 @@
       observer.unobserve(entry.target);
     });
   }, {threshold: 0.08, rootMargin: '0px 0px -24px 0px'});
-  document.querySelectorAll('.section-intro, .course-photo, .course-content, .offering-grid article, .eps-notice, .eps-process-heading, .eps-steps li, .eps-reality, .outline-body, .feature-list, .pop-quiz, .school-photo-grid > a, .school-video-grid figure, .community-grid > *, .questions > *, .enroll > *, .message-intro, #contact-form, .visit > *, .partnerships li, .award-grid figure, .testimonial-grid figure, footer > *, .about-values article, .about-courses > *, .hall-section > *').forEach((element, index) => {
+  document.querySelectorAll('.section-intro, .course-photo, .course-content, .offering-grid article, .eps-notice, .eps-process-heading, .eps-steps li, .eps-reality, .outline-body, .feature-list, .pop-quiz, .school-photo-grid > a, .school-video-grid figure, .community-grid > *, .questions > *, .enroll > *, .message-intro, .contact-actions-panel, .visit > *, .partnerships li, .award-grid figure, .testimonial-grid figure, footer > *, .about-values article, .about-courses > *, .hall-section > *').forEach((element, index) => {
     element.classList.add('scroll-reveal');
     element.style.setProperty('--reveal-delay', `${(index % 3) * 65}ms`);
     observer.observe(element);

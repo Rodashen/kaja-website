@@ -67,3 +67,14 @@ footer>a:not(.footer-brand){grid-column:2;justify-self:start;min-height:44px;dis
 }
 
 footer .footer-brand img{background:transparent}
+
+/* Direct contact and enrollment actions. */
+.contact-actions-panel{align-self:center;min-width:0}
+.contact-actions-panel h3{font-size:30px;margin-bottom:16px}
+.contact-actions-panel>p{max-width:52ch;margin-bottom:28px}
+.contact-action-buttons{display:flex;flex-wrap:wrap;gap:14px;align-items:stretch}
+.contact-action-buttons .button{min-height:62px;padding:18px 24px;border-radius:14px;gap:18px;font-size:16px;flex:1 1 210px}
+.contact-action-buttons #gmail-compose{display:inline-flex;margin:0;font-size:16px;text-decoration:none}
+.contact-action-buttons .contact-register{background:var(--navy)}
+.contact-action-buttons .contact-register:hover{background:#174d85}
+@media(max-width:760px){.contact-action-buttons{flex-direction:column}.contact-action-buttons .button{flex:auto;width:100%}.contact-actions-panel h3{font-size:27px}}
